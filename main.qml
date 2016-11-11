@@ -8,7 +8,9 @@ import Qt.labs.settings 1.0
 
 import QtLocation 5.3
 import QtPositioning 5.2
-import QtGraphicalEffects 1.0
+
+import "polyline.js" as PolyLineLogic
+//import ru.marsworks 1.0
 
 ApplicationWindow {
     id: window
@@ -80,6 +82,7 @@ ApplicationWindow {
 
     Map {
         id: map
+        objectName: "qmlMap"
         anchors.fill: parent
         plugin: Plugin {
             id: mapPlugin
@@ -93,36 +96,48 @@ ApplicationWindow {
 
         zoomLevel: 19
 
-        MapPolyline {
-            id: polyline
-            line.width: 3
-            line.color: 'cyan'
-            opacity: 0.8
-//            path: [
-//                {latitude: 55.74795553273474, longitude: 37.860303680900216 },
-//                {latitude: 55.748722422094595, longitude: 37.86068991899836 },
-//                {latitude: 55.751148237045754, longitude: 37.863859217170386 },
-//                {latitude: 55.75170757312632, longitude: 37.86638502359739 },
-//                {latitude: 55.75085078101032, longitude: 37.868843119147925 },
-//                {latitude: 55.74984189672785, longitude: 37.86323012972636 },
-//                {latitude: 55.74831336378359, longitude: 37.86134662295146 },
-//                {latitude: 55.74790274342821, longitude: 37.86037029887004 }
-//            ]
+        function addPolyline(cppObject) {
+            PolyLineLogic.addPolyline(cppObject)
         }
 
-        Component.onCompleted: {
-            var origin = QtPositioning.coordinate(55.74662048176102, 37.85956919945818)
-            var path = [Qt.point(0, 0), Qt.point(100, 0), Qt.point(100, 100), Qt.point(0, 100)]
-            var arc = 111323.872 // m per degree
-            var geopath = []
-            for (var i in path) {
-                var dphi = path[i].y / arc
-                var dlambda = path[i].x / (arc * Math.cos(origin.latitude / 360.0 * 2 * Math.PI))
-                geopath.push(QtPositioning.coordinate(origin.latitude + dphi, origin.longitude + dlambda))
-                console.log(origin.latitude + dphi, origin.longitude + dlambda)
-            }
-            polyline.path = geopath
+        function removePolyline(cppObject) {
+            PolyLineLogic.removePolyline(cppObject)
         }
+
+        function modifyPolyline(cppObject, points, color, width) {
+            PolyLineLogic.modifyPolyline(cppObject, points, color, width)
+        }
+
+//        MapPolyline {
+//            id: polyline
+//            line.width: 3
+//            line.color: 'cyan'
+//            opacity: 0.8
+////            path: [
+////                {latitude: 55.74795553273474, longitude: 37.860303680900216 },
+////                {latitude: 55.748722422094595, longitude: 37.86068991899836 },
+////                {latitude: 55.751148237045754, longitude: 37.863859217170386 },
+////                {latitude: 55.75170757312632, longitude: 37.86638502359739 },
+////                {latitude: 55.75085078101032, longitude: 37.868843119147925 },
+////                {latitude: 55.74984189672785, longitude: 37.86323012972636 },
+////                {latitude: 55.74831336378359, longitude: 37.86134662295146 },
+////                {latitude: 55.74790274342821, longitude: 37.86037029887004 }
+////            ]
+//        }
+
+//        Component.onCompleted: {
+//            var origin = QtPositioning.coordinate(55.74662048176102, 37.85956919945818)
+//            var path = [Qt.point(0, 0), Qt.point(100, 0), Qt.point(100, 100), Qt.point(0, 100)]
+//            var arc = 111323.872 // m per degree
+//            var geopath = []
+//            for (var i in path) {
+//                var dphi = path[i].y / arc
+//                var dlambda = path[i].x / (arc * Math.cos(origin.latitude / 360.0 * 2 * Math.PI))
+//                geopath.push(QtPositioning.coordinate(origin.latitude + dphi, origin.longitude + dlambda))
+//                console.log(origin.latitude + dphi, origin.longitude + dlambda)
+//            }
+//            polyline.path = geopath
+//        }
 
     }
 
@@ -140,48 +155,140 @@ ApplicationWindow {
         onClicked: console.log(map.center.latitude, map.center.longitude)
     }
 
-    RingDial {
-        x: parent.width / 2
-        y: parent.height / 2
-        opacity: 0.8
+//    RingDial {
+//        x: 100
+//        y: 100
+//        radius: 50
+//        opacity: 0.8
+//    }
+
+    QtObject {
+        id: someObject
+        property bool bprop: true
+        property int iprop: 77
+        property string sprop: "valu12e"
+
+        onBpropChanged: console.log("bprop changed to", bprop)
+        onIpropChanged: console.log("iprop changed to", iprop)
+        onSpropChanged: console.log("sprop changed to", sprop)
+
+//        function info() {
+//            return '{"properties": [{"property": "bprob", "text": "Boolean"},
+//                                  {"property": "iprop", "text": "Integer"},
+//                                  {"property": "sprop", "text": "String"}]}'
+//        }
     }
 
+
     Pane {
+        id: propertiesPane
         anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        anchors.bottom: plusButton.top
         anchors.right: parent.right
         anchors.margins: 8
         width: 300
         Material.elevation: 8
+
+        ListView {
+            anchors.fill: parent
+            clip: true
+            delegate: Column {
+                width: parent.width
+                spacing: 10
+                Item {
+                    width: parent.width
+                    height: 24
+                    Text {
+                        text: title
+                        font.bold: true
+                        font.pointSize: 10
+                        anchors.centerIn: parent
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 2
+                        y: 22
+                        color: Material.accent
+                    }
+                }
+
+                Loader {
+                    source: qmlFile
+                    width: parent.width
+                    property QtObject object: someObject
+                }
+            }
+
+            model: ListModel {
+                ListElement {
+                    title: "Some object"
+                    qmlFile: "PointParameters.qml"
+                    //targetObject: someObject
+                }
+            }
+
+            ScrollIndicator.vertical: ScrollIndicator { }
+        }
+
+
+    }
+
+    Button {
+        id: plusButton
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 20
+        text:"+"
+        highlighted: true
+        onClicked: drawer.open()
+    }
+
+    function onCreateLinearFill() {
+        console.log("Creating linear fill objects")
     }
 
     Drawer {
         id: drawer
-        width: Math.min(window.width, window.height) / 6 * 2
+        width: Math.min(window.width, window.height) / 5 * 2
         height: window.height
 
         ListView {
-            id: listView
+            id: drawerListView
             currentIndex: -1
             anchors.fill: parent
 
             delegate: ItemDelegate {
+                id: control
                 width: parent.width
-                text: model.title
+                //text: model.title
                 highlighted: ListView.isCurrentItem
-                onClicked: {
-                    if (listView.currentIndex != index) {
-                        listView.currentIndex = index
-                        titleLabel.text = model.title
-                        stackView.replace(model.source)
+                contentItem: Row {
+                    spacing: 10
+                    Text {
+                        text: "O"
                     }
+
+                    Text {
+                        text: model.title
+                    }
+                }
+
+                onClicked: {
+                    console.log(control.source)
                     drawer.close()
                 }
             }
 
             model: ListModel {
-                ListElement { title: "BusyIndicator"; source: "qrc:/pages/BusyIndicatorPage.qml" }
-                ListElement { title: "Button"; source: "qrc:/pages/ButtonPage.qml" }
+                ListElement { title: "Line"; source: "qrc:/pages/BusyIndicatorPage.qml" }
+                ListElement { title: "Polyline"; source: "qrc:/pages/ButtonPage.qml" }
+                ListElement { title: "MakePossible Curve" }
+                //ListElement { title: "Linear Fill"; action: onCreateLinearFill() }
+            }
+
+            Component.onCompleted: {
+                drawerListView.model.append({title: "Test", action123: 123})
             }
 
             ScrollIndicator.vertical: ScrollIndicator { }

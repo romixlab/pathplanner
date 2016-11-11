@@ -20,5 +20,7 @@
         <file>images/menu@3x.png</file>
         <file>images/menu@4x.png</file>
         <file>images/point.png</file>
+        <file>PointParameters.qml</file>
+        <file>polyline.js</file>
     </qresource>
 </RCC>

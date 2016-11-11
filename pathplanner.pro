@@ -1,9 +1,11 @@
 TEMPLATE = app
 
-QT += qml quickcontrols2
+QT += qml quickcontrols2 positioning
 CONFIG += c++11
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    linearpath.cpp \
+    geopath.cpp
 
 RESOURCES += qml.qrc
 
@@ -13,4 +15,6 @@ QML_IMPORT_PATH =
 # Default rules for deployment.
 include(deployment.pri)
 
-HEADERS +=
+HEADERS += \
+    linearpath.h \
+    geopath.h
